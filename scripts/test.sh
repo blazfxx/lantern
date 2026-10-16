@@ -24,4 +24,5 @@ run build-test/hello_x64 --arch x86_64
 run build-test/tiny.elf
 [ -f /bin/ls ] && run /bin/ls --arch arm64e
 [ -f /usr/bin/curl ] && run /usr/bin/curl --arch arm64
+[ -d /System/Applications/Calculator.app ] && run /System/Applications/Calculator.app --arch arm64e
 exit $fail

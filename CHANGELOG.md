@@ -2,6 +2,14 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: [SemVer](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+- New app icon, drawn as SVG (`app/AppIcon.svg`) and rendered into `app/AppIcon.iconset`.
+- Engine updated to Erebus `307a76a`: opens `.app` bundles directly, MCP server for reverse-engineering agents, launcher package.
+- Opening an `.app` resolves its main executable for the architecture picker; *Open With → Lantern* now offers applications.
+- Added `AGENTS.md` (build, test and release steps for people and AI agents).
+
 ## [0.1.0] — 2026-10-15
 
 First release.

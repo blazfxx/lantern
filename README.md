@@ -60,7 +60,7 @@ Optional: `brew install keystone` enables *Assemble Instruction* (the engine loa
 
 ## Using Lantern
 
-Open a binary with **File → Open…** (⌘O), by dropping it on the window or Dock icon, or via *Open With → Lantern*. Fat binaries ask which
+Open a binary with **File → Open…** (⌘O), by dropping it on the window or Dock icon, or via *Open With → Lantern*. You can open an `.app` bundle directly — Lantern analyses its main executable. Fat binaries ask which
 architecture to analyse.
 
 | Key (in a listing) | Action | | Menu / shortcut | Action |

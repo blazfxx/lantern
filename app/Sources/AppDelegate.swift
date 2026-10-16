@@ -17,8 +17,14 @@ enum Paths {
         for b in "\(file.path)|\(size)|\(mtime)|\(arch ?? "")|\(EngineProcess.version)".utf8 { h = (h ^ UInt64(b)) &* 0x100000001b3 }
         return databases.appendingPathComponent("\(file.deletingPathExtension().lastPathComponent)-\(String(h, radix: 16)).erdb")
     }
+    /// For an .app bundle, the main executable inside it; otherwise the file itself.
+    static func executable(of url: URL) -> URL {
+        guard url.pathExtension.lowercased() == "app",
+              let bundle = Bundle(url: url), let exe = bundle.executableURL else { return url }
+        return exe
+    }
     static func fatArchitectures(_ file: URL) -> [String] {
-        let p = Process(); p.executableURL = URL(fileURLWithPath: "/usr/bin/lipo"); p.arguments = ["-archs", file.path]
+        let p = Process(); p.executableURL = URL(fileURLWithPath: "/usr/bin/lipo"); p.arguments = ["-archs", executable(of: file).path]
         let o = Pipe(); p.standardOutput = o; p.standardError = FileHandle.nullDevice
         guard (try? p.run()) != nil else { return [] }
         let d = o.fileHandleForReading.readDataToEndOfFile(); p.waitUntilExit()
@@ -92,7 +98,7 @@ final class WelcomeController: NSWindowController {
         let title = NSTextField(labelWithString: "Lantern"); title.font = .systemFont(ofSize: 30, weight: .bold)
         let sub = NSTextField(labelWithString: "A native disassembler & decompiler for macOS"); sub.font = .systemFont(ofSize: 13); sub.textColor = .secondaryLabelColor
         let open = NSButton(title: "Open Binary…", target: self, action: #selector(openTapped)); open.bezelStyle = .rounded; open.controlSize = .large; open.keyEquivalent = "\r"
-        let hint = NSTextField(labelWithString: "or drop a Mach-O, ELF or PE file here"); hint.font = .systemFont(ofSize: 12); hint.textColor = .tertiaryLabelColor
+        let hint = NSTextField(labelWithString: "or drop a Mach-O, ELF or PE file, or an .app, here"); hint.font = .systemFont(ofSize: 12); hint.textColor = .tertiaryLabelColor
         let rl = NSTextField(labelWithString: "Recent"); rl.font = .systemFont(ofSize: 11, weight: .semibold); rl.textColor = .secondaryLabelColor
         recents.orientation = .vertical; recents.alignment = .centerX; recents.spacing = 2
         let stack = NSStackView(views: [icon, title, sub, open, hint, rl, recents])

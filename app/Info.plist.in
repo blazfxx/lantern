@@ -41,7 +41,7 @@
       <key>CFBundleTypeName</key><string>Executable or library</string>
       <key>CFBundleTypeRole</key><string>Viewer</string>
       <key>LSHandlerRank</key><string>Alternate</string>
-      <key>LSItemContentTypes</key><array><string>public.executable</string><string>public.unix-executable</string><string>com.apple.mach-o-dylib</string><string>public.data</string></array>
+      <key>LSItemContentTypes</key><array><string>public.executable</string><string>com.apple.application-bundle</string><string>public.unix-executable</string><string>com.apple.mach-o-dylib</string><string>public.data</string></array>
     </dict>
   </array>
 </dict>
