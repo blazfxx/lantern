@@ -1,0 +1,6 @@
+/build*/
+/dist/
+*.erdb
+.DS_Store
+.vscode/
+.idea/

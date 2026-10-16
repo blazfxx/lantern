@@ -1,0 +1,27 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - run: brew install cmake ninja capstone cpp-httplib nlohmann-json
+      - run: scripts/build-app.sh --zip --dmg
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" dist/*.zip dist/*.dmg --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" dist/*.zip dist/*.dmg --generate-notes --title "Lantern ${GITHUB_REF_NAME#v}"
+          fi

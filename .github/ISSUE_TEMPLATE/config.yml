@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/blazfxx/lantern/security/advisories/new
+    about: Please report security issues privately.
+  - name: Analysis engine bug
+    url: https://github.com/blazfxx/erebus/issues/new/choose
+    about: Wrong disassembly, decompiler output or loader crashes belong to Erebus.
