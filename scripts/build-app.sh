@@ -25,7 +25,7 @@ cmake --build build-engine --target erebus
 
 echo "==> app"
 rm -rf "$APP"; mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources/bin"
-swiftc -O app/Sources/*.swift -o "$APP/Contents/MacOS/Lantern" -framework Cocoa
+swiftc -O -swift-version 5 app/Sources/*.swift -o "$APP/Contents/MacOS/Lantern" -framework Cocoa
 cp build-engine/erebus "$APP/Contents/Resources/bin/erebus"
 cp LICENSE "$APP/Contents/Resources/LICENSE"
 cp THIRD_PARTY_NOTICES.md "$APP/Contents/Resources/THIRD_PARTY_NOTICES.md"

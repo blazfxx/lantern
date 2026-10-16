@@ -185,11 +185,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         progress.makeKeyAndOrderFront(nil)
         welcome?.close()
         let db = isDB ? url : Paths.database(for: url, arch: arch)
+        let sliceArch = arch
         Task {
             defer { self.opening.remove(url); progress.orderOut(nil) }
             if !isDB && !FileManager.default.fileExists(atPath: db.path) {
                 let r = await Task.detached { () -> (Int32, String) in
-                    var args = ["open", url.path, "-o", db.path, "-q"]; if let a = arch { args += ["--arch", a] }
+                    var args = ["open", url.path, "-o", db.path, "-q"]; if let a = sliceArch { args += ["--arch", a] }
                     let r = EngineProcess.run(args); return (r.status, r.err)
                 }.value
                 if r.0 != 0 { self.alert("Couldn't open \(url.lastPathComponent)", r.1.isEmpty ? "Analysis failed." : r.1); self.showWelcomeIfIdle(); return }

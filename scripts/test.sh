@@ -6,7 +6,7 @@ cd "$(dirname "$0")/.."
 cmake -S engine -B build-engine -G Ninja -DCMAKE_BUILD_TYPE=Release -DEREBUS_STATIC_CAPSTONE=ON >/dev/null
 cmake --build build-engine --target erebus >/dev/null
 mkdir -p build-test
-swiftc -O app/Sources/*.swift -o build-test/Lantern -framework Cocoa || exit 1
+swiftc -O -swift-version 5 app/Sources/*.swift -o build-test/Lantern -framework Cocoa || exit 1
 export LANTERN_ENGINE="$PWD/build-engine/erebus"
 
 clang -O1 -o build-test/hello_arm64 engine/tests/hello.c
