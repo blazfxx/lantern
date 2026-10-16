@@ -4,6 +4,7 @@ import AppKit
 
 enum SelfTest {
     static var failures = 0
+    static var stage = "start"
     static func check(_ name: String, _ ok: Bool, _ detail: String = "") {
         print((ok ? "  PASS  " : "  FAIL  ") + name + (detail.isEmpty ? "" : "  — " + detail))
         if !ok { failures += 1 }
@@ -43,6 +44,7 @@ enum SelfTest {
 
         do {
             // --- info / lists
+            stage = "info/lists"
             let info = try awaitSync { try await api.info() }
             check("info: functions found", info.funcs > 0, "\(info.funcs) procedures, \(info.insns) instructions")
             let funcs = try awaitSync { try await api.funcs("") }
@@ -52,11 +54,13 @@ enum SelfTest {
             check("name list", names.total > 0)
 
             // --- pick a real (non-thunk) function, prefer the entry
+            stage = "function detail"
             let target = info.entry.isEmpty ? (funcs.items.first { !$0.t }?.a ?? funcs.items[0].a) : info.entry
             let f = try awaitSync { try await api.function(target) }
             check("function detail", !f.blocks.isEmpty, "\(f.n): \(f.blocks.count) blocks")
 
             // --- assembly renderer
+            stage = "assembly render"
             let insnCount = f.blocks.reduce(0) { $0 + $1.insns.count }
             let asm = AssemblyRenderer.render(f, showBytes: true)
             check("assembly: every instruction has a line", asm.lineRanges.count >= insnCount && asm.text.length > 0, "\(insnCount) instructions")
@@ -66,6 +70,7 @@ enum SelfTest {
             check("text view shows rendering", (tv.textStorage?.length ?? 0) == asm.text.length)
 
             // --- control-flow graph
+            stage = "cfg"
             let layout = CFGLayouter.layout(f)
             check("cfg: one node per block", layout.nodes.count == f.blocks.count)
             check("cfg: no overlapping nodes", !CFGLayouter.hasOverlap(layout))
@@ -81,6 +86,7 @@ enum SelfTest {
             } else { check("cfg: offscreen bitmap", false) }
 
             // --- pseudo-code (may be unsupported for exotic arches)
+            stage = "pseudo"
             if let p = try? awaitSync({ try await api.pseudo(f.a) }) {
                 let pr = PseudoRenderer.render(p)
                 check("pseudo-code renders", !p.lines.isEmpty && pr.text.length > 0, "\(p.lines.count) lines")
@@ -88,6 +94,7 @@ enum SelfTest {
             } else { check("pseudo-code (skipped: not available for this function)", true) }
 
             // --- hex + data inspector
+            stage = "hex"
             let h = try awaitSync { try await api.hex(f.a, n: 64) }
             let hr = HexRenderer.render(h)
             check("hex: rows rendered", hr.order.count >= 3, "\(hr.order.count) rows")
@@ -95,6 +102,7 @@ enum SelfTest {
             check("data inspector decodes integers", di.contains("uint32") && di.contains("int64"))
 
             // --- xrefs / where / find
+            stage = "xrefs/where/find"
             let w = try awaitSync { try await api.whereIs(f.a) }
             check("where resolves function start", w.func == f.a)
             let xr = try awaitSync { try await api.xrefs(f.a) }
@@ -104,6 +112,7 @@ enum SelfTest {
             check("byte search finds the function bytes", fnd.items.contains { $0.a == f.a })
 
             // --- edits: rename + comment round trip
+            stage = "rename/comment"
             let originalName = f.n
             _ = try awaitSync { try await api.rename(f.a, "lantern_selftest_fn") }
             let renamed = try awaitSync { try await api.function(f.a) }
@@ -117,6 +126,7 @@ enum SelfTest {
             check("comment appears in listing", commented.blocks[0].insns[0].c.contains { $0.t.contains("self-test comment") })
 
             // --- patching round trip (write identical bytes: reversible and content-neutral)
+            stage = "patch/unpatch"
             let hb = try awaitSync { try await api.hex(firstInsn, n: 4) }
             _ = try awaitSync { try await api.patch(firstInsn, hex: hb.hex) }
             let p1 = try awaitSync { try await api.patches() }
@@ -125,7 +135,7 @@ enum SelfTest {
             let p2 = try awaitSync { try await api.patches() }
             check("patch reverted", p2.items.isEmpty)
         } catch {
-            check("no unexpected errors", false, error.localizedDescription)
+            check("no unexpected errors", false, "during \(stage): \(error.localizedDescription)")
         }
 
         print(failures == 0 ? "All checks passed." : "\(failures) check(s) failed.")

@@ -17,7 +17,8 @@ fail=0
 run() {  # file [--arch X]
   echo "== $*"
   out=$(./build-test/Lantern --self-test "$@" 2>&1); rc=$?
-  echo "$out" | grep -E "FAIL|passed|failed" ; [ $rc = 0 ] || fail=1
+  echo "$out" | grep -E "FAIL|passed|failed"
+  if [ $rc != 0 ]; then fail=1; echo "--- full output ---"; echo "$out"; fi
 }
 run build-test/hello_arm64
 run build-test/hello_x64 --arch x86_64
