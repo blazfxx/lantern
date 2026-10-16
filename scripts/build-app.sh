@@ -32,9 +32,8 @@ cp THIRD_PARTY_NOTICES.md "$APP/Contents/Resources/THIRD_PARTY_NOTICES.md"
 sed "s/@VERSION@/$VERSION/g" app/Info.plist.in > "$APP/Contents/Info.plist"
 
 echo "==> icon"
-ICONSET=$(mktemp -d)/AppIcon.iconset
-swift app/make_icon.swift "$ICONSET"
-iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns"
+# The icon is drawn in app/AppIcon.svg and rendered into app/AppIcon.iconset (scripts/render-icon.mjs).
+iconutil -c icns app/AppIcon.iconset -o "$APP/Contents/Resources/AppIcon.icns"
 
 echo "==> ad-hoc sign"
 xattr -cr "$APP"
