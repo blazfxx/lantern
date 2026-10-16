@@ -325,7 +325,9 @@ final class DocumentWindowController: NSWindowController, NSWindowDelegate, NSTo
         if let f = current { let r = AssemblyRenderer.render(f, showBytes: showBytes); rendered = r; asmView.show(r); if let a = currentLoc { asmView.reveal(a) } }
     }
     @objc func copyPseudo(_ s: Any?) {
-        guard let f = current, let p = try? awaitSync({ try await self.api.pseudo(f.a) }) else { return }
+        guard let f = current else { return }
+        let api = self.api
+        guard let p = try? awaitSync({ try await api.pseudo(f.a) }) else { return }
         NSPasteboard.general.clearContents(); NSPasteboard.general.setString(PseudoRenderer.plainText(p), forType: .string)
     }
 
@@ -473,11 +475,16 @@ final class DocumentWindowController: NSWindowController, NSWindowDelegate, NSTo
     func windowWillClose(_ notification: Notification) { engine.stop(); onClose?(self) }
 }
 
-// Helper for the one synchronous spot (clipboard copy): run an async op to completion off the main actor.
-func awaitSync<T>(_ op: @escaping () async throws -> T) throws -> T {
+// Helper for synchronous call sites (clipboard copy, headless self-test): run an async op to completion off the main actor.
+private final class ResultBox<T>: @unchecked Sendable { var value: Result<T, Error>? }
+
+func awaitSync<T>(_ op: @escaping @Sendable () async throws -> T) throws -> T {
     let sem = DispatchSemaphore(value: 0)
-    var result: Result<T, Error>!
-    Task.detached { do { result = .success(try await op()) } catch { result = .failure(error) }; sem.signal() }
+    let box = ResultBox<T>()
+    Task.detached {
+        do { box.value = .success(try await op()) } catch { box.value = .failure(error) }
+        sem.signal()
+    }
     sem.wait()
-    return try result.get()
+    return try box.value!.get()
 }

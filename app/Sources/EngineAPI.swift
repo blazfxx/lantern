@@ -90,12 +90,15 @@ final class EngineProcess {
         p.executableURL = URL(fileURLWithPath: bin)
         p.arguments = ["serve", database.path, "--port", "0", "--no-open", "--watch-pid", String(getpid())]
         let out = Pipe(); p.standardOutput = out; p.standardError = FileHandle.nullDevice
-        var buf = ""; var done = false
-        out.fileHandleForReading.readabilityHandler = { [weak self] h in
+        final class State: @unchecked Sendable { var buf = ""; var done = false }
+        let state = State()
+        nonisolated(unsafe) let cb = completion
+        nonisolated(unsafe) let owner = self
+        out.fileHandleForReading.readabilityHandler = { h in
             let d = h.availableData; if d.isEmpty { return }
-            buf += String(decoding: d, as: UTF8.self)
-            if !done, let r = buf.range(of: #"http://127\.0\.0\.1:\d+"#, options: .regularExpression), let u = URL(string: String(buf[r])) {
-                done = true; h.readabilityHandler = nil; self?.baseURL = u; completion(.success(u))
+            state.buf += String(decoding: d, as: UTF8.self)
+            if !state.done, let r = state.buf.range(of: #"http://127\.0\.0\.1:\d+"#, options: .regularExpression), let u = URL(string: String(state.buf[r])) {
+                state.done = true; h.readabilityHandler = nil; owner.baseURL = u; cb(.success(u))
             }
         }
         do { try p.run(); proc = p } catch { completion(.failure(.message("Could not start the engine: \(error)"))) }
@@ -107,7 +110,7 @@ final class EngineProcess {
 
 // MARK: - API client
 
-final class EngineAPI {
+final class EngineAPI: @unchecked Sendable {
     let base: URL
     private let session = URLSession(configuration: .ephemeral)
     init(base: URL) { self.base = base }
